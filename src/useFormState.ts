@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSignal } from '@preact/signals';
 
 import getProxyFormState from './logic/getProxyFormState';
 import shouldRenderFormState from './logic/shouldRenderFormState';
@@ -43,12 +44,18 @@ import { useSubscribe } from './useSubscribe';
  * }
  * ```
  */
+
 function useFormState<TFieldValues extends FieldValues = FieldValues>(
   props?: UseFormStateProps<TFieldValues>,
 ): UseFormStateReturn<TFieldValues> {
   const methods = useFormContext<TFieldValues>();
   const { control = methods.control, disabled, name, exact } = props || {};
-  const [formState, updateFormState] = React.useState(control._formState);
+  const formState = useSignal<FormState<FieldValues>>(control._formState);
+
+  const updateFormState = (value: FormState<TFieldValues>) => {
+    formState.value = value;
+  };
+
   const _mounted = React.useRef(true);
   const _localProxyFormState = React.useRef({
     isDirty: false,
@@ -95,8 +102,10 @@ function useFormState<TFieldValues extends FieldValues = FieldValues>(
     };
   }, [control]);
 
+  // @ts-ignore
   return getProxyFormState(
-    formState,
+    formState.value,
+    // @ts-ignore
     control,
     _localProxyFormState.current,
     false,

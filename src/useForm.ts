@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSignal, useSignalEffect } from '@preact/signals';
 
 import { createFormControl } from './logic/createFormControl';
 import getProxyFormState from './logic/getProxyFormState';
@@ -43,6 +44,7 @@ import { useSubscribe } from './useSubscribe';
  * }
  * ```
  */
+
 export function useForm<
   TFieldValues extends FieldValues = FieldValues,
   TContext = any,
@@ -54,7 +56,7 @@ export function useForm<
     UseFormReturn<TFieldValues, TContext, TTransformedValues> | undefined
   >();
   const _values = React.useRef<typeof props.values>();
-  const [formState, updateFormState] = React.useState<FormState<TFieldValues>>({
+  const formState = useSignal<FormState<FieldValues>>({
     isDirty: false,
     isValidating: false,
     isLoading: isFunction(props.defaultValues),
@@ -72,16 +74,14 @@ export function useForm<
       : props.defaultValues,
   });
 
-  if (!_formControl.current) {
+  if (_formControl.current === undefined) {
     _formControl.current = {
-      ...createFormControl(props, () =>
-        updateFormState((formState) => ({ ...formState })),
-      ),
-      formState,
+      ...createFormControl(props, () => (formState.value = { ...formState })),
+      formState: formState.value,
     };
   }
 
-  const control = _formControl.current.control;
+  const control = _formControl?.current.control;
   control._options = props;
 
   useSubscribe({
@@ -97,7 +97,7 @@ export function useForm<
           true,
         )
       ) {
-        updateFormState({ ...control._formState });
+        formState.value = { ...control._formState };
       }
     },
   });
@@ -110,19 +110,19 @@ export function useForm<
   React.useEffect(() => {
     if (control._proxyFormState.isDirty) {
       const isDirty = control._getDirty();
-      if (isDirty !== formState.isDirty) {
+      if (isDirty !== formState.value.isDirty) {
         control._subjects.state.next({
           isDirty,
         });
       }
     }
-  }, [control, formState.isDirty]);
+  }, [control, formState.value.isDirty]);
 
   React.useEffect(() => {
     if (props.values && !deepEqual(props.values, _values.current)) {
       control._reset(props.values, control._options.resetOptions);
       _values.current = props.values;
-      updateFormState((state) => ({ ...state }));
+      formState.value = { ...formState.value };
     } else {
       control._resetDefaultValues();
     }
@@ -148,7 +148,9 @@ export function useForm<
     control._removeUnmounted();
   });
 
-  _formControl.current.formState = getProxyFormState(formState, control);
+  // @ts-ignore
+  _formControl.current.formState = getProxyFormState(formState.value, control);
 
+  // @ts-ignore
   return _formControl.current;
 }
