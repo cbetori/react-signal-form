@@ -1,5 +1,5 @@
 {
-  "name": "react-hook-form",
+  "name": "react-signal-form",
   "description": "Performant, flexible and extensible forms library for React Hooks",
   "version": "7.49.2",
   "main": "dist/index.cjs.js",
@@ -72,6 +72,7 @@
   "license": "MIT",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.35.2",
+    "@preact/signals-react": "^2.0.0",
     "@rollup/plugin-commonjs": "^22.0.2",
     "@rollup/plugin-node-resolve": "^14.1.0",
     "@rollup/plugin-terser": "^0.4.3",
@@ -101,6 +102,7 @@
     "jest-preview": "^0.3.1",
     "lint-staged": "^13.2.2",
     "msw": "^1.2.2",
+    "preact": "^10.19.3",
     "prettier": "^2.8.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
