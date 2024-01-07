@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSignal, effect } from '@preact/signals';
 
 import generateWatchOutput from './logic/generateWatchOutput';
 import shouldSubscribeByName from './logic/shouldSubscribeByName';
@@ -144,6 +145,7 @@ export function useWatch<TFieldValues extends FieldValues>(
   props?: UseWatchProps<TFieldValues>,
 ) {
   const methods = useFormContext();
+  console.log(methods);
   const {
     control = methods.control,
     name,
@@ -152,7 +154,10 @@ export function useWatch<TFieldValues extends FieldValues>(
     exact,
   } = props || {};
   const _name = React.useRef(name);
-
+  const value = useSignal<any>({});
+  const updateValue = (newValue: any) => {
+    value.value = newValue;
+  };
   _name.current = name;
 
   useSubscribe({
@@ -181,11 +186,9 @@ export function useWatch<TFieldValues extends FieldValues>(
     },
   });
 
-  const [value, updateValue] = React.useState(
-    control._getWatch(
-      name as InternalFieldName,
-      defaultValue as DeepPartialSkipArrayKey<TFieldValues>,
-    ),
+  value.value = control._getWatch(
+    name as InternalFieldName,
+    defaultValue as DeepPartialSkipArrayKey<TFieldValues>,
   );
 
   React.useEffect(() => control._removeUnmounted());

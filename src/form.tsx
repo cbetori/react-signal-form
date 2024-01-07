@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSignal } from '@preact/signals';
 
 import get from './utils/get';
 import { FieldValues, FormProps } from './types';
@@ -28,12 +29,13 @@ const POST_REQUEST = 'post';
  * }
  * ```
  */
+
 function Form<
   T extends FieldValues,
   U extends FieldValues | undefined = undefined,
 >(props: FormProps<T, U>) {
   const methods = useFormContext<T>();
-  const [mounted, setMounted] = React.useState(false);
+  const mounted = useSignal(false);
   const {
     control = methods.control,
     onSubmit,
@@ -121,7 +123,7 @@ function Form<
   };
 
   React.useEffect(() => {
-    setMounted(true);
+    mounted.value = true;
   }, []);
 
   return render ? (
@@ -132,7 +134,7 @@ function Form<
     </>
   ) : (
     <form
-      noValidate={mounted}
+      noValidate={mounted.value}
       action={action}
       method={method}
       encType={encType}

@@ -21,6 +21,7 @@ import { useFormContext } from './useFormContext';
 import { useFormState } from './useFormState';
 import { useWatch } from './useWatch';
 import { set } from './utils';
+import { useSignalEffect } from '@preact/signals';
 
 /**
  * Custom hook to work with controlled component, this function provide you with both form and field level state. Re-render is isolated at the hook level.
@@ -65,6 +66,15 @@ export function useController<
     ),
     exact: true,
   }) as FieldPathValue<TFieldValues, TName>;
+
+  // const [value, setValue] = React.useState<FieldPathValue<TFieldValues, TName>>(
+  //   watched.value,
+  // );
+
+  // useSignalEffect(() => {
+  //   setValue(watched.value);
+  // });
+
   const formState = useFormState({
     control,
     name,
@@ -73,7 +83,7 @@ export function useController<
   const _registerProps = React.useRef(
     control.register(name, {
       ...props.rules,
-      value,
+      value: value,
       ...(isBoolean(props.disabled) ? { disabled: props.disabled } : {}),
     }),
   );
@@ -125,19 +135,20 @@ export function useController<
   return {
     field: {
       name,
-      value,
+      value: value.value,
       ...(isBoolean(disabled) || formState.disabled
         ? { disabled: formState.disabled || disabled }
         : {}),
       onChange: React.useCallback(
-        (event) =>
+        (event) => {
           _registerProps.current.onChange({
             target: {
               value: getEventValue(event),
               name: name as InternalFieldName,
             },
             type: EVENTS.CHANGE,
-          }),
+          });
+        },
         [name],
       ),
       onBlur: React.useCallback(

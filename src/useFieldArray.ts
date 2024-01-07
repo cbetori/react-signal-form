@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSignal } from '@preact/signals';
 
 import generateId from './logic/generateId';
 import getFocusFieldName from './logic/getFocusFieldName';
@@ -78,6 +79,7 @@ import { useSubscribe } from './useSubscribe';
  * }
  * ```
  */
+
 export function useFieldArray<
   TFieldValues extends FieldValues = FieldValues,
   TFieldArrayName extends FieldArrayPath<TFieldValues> = FieldArrayPath<TFieldValues>,
@@ -92,16 +94,16 @@ export function useFieldArray<
     keyName = 'id',
     shouldUnregister,
   } = props;
-  const [fields, setFields] = React.useState(control._getFieldArray(name));
+  const fields = useSignal<any[]>(control._getFieldArray(name));
   const ids = React.useRef<string[]>(
     control._getFieldArray(name).map(generateId),
   );
-  const _fieldIds = React.useRef(fields);
+  const _fieldIds = React.useRef(fields.value);
   const _name = React.useRef(name);
   const _actioned = React.useRef(false);
 
   _name.current = name;
-  _fieldIds.current = fields;
+  _fieldIds.current = fields.value;
   control._names.array.add(name);
 
   props.rules &&
@@ -121,7 +123,7 @@ export function useFieldArray<
       if (fieldArrayName === _name.current || !fieldArrayName) {
         const fieldValues = get(values, _name.current);
         if (Array.isArray(fieldValues)) {
-          setFields(fieldValues);
+          fields.value = fieldValues;
           ids.current = fieldValues.map(generateId);
         }
       }
@@ -161,7 +163,7 @@ export function useFieldArray<
     );
     ids.current = appendAt(ids.current, appendValue.map(generateId));
     updateValues(updatedFieldArrayValues);
-    setFields(updatedFieldArrayValues);
+    fields.value = updatedFieldArrayValues;
     control._updateFieldArray(name, updatedFieldArrayValues, appendAt, {
       argA: fillEmptyArray(value),
     });
@@ -181,7 +183,7 @@ export function useFieldArray<
     control._names.focus = getFocusFieldName(name, 0, options);
     ids.current = prependAt(ids.current, prependValue.map(generateId));
     updateValues(updatedFieldArrayValues);
-    setFields(updatedFieldArrayValues);
+    fields.value = updatedFieldArrayValues;
     control._updateFieldArray(name, updatedFieldArrayValues, prependAt, {
       argA: fillEmptyArray(value),
     });
@@ -193,7 +195,7 @@ export function useFieldArray<
     >[] = removeArrayAt(control._getFieldArray(name), index);
     ids.current = removeArrayAt(ids.current, index);
     updateValues(updatedFieldArrayValues);
-    setFields(updatedFieldArrayValues);
+    fields.value = updatedFieldArrayValues;
     control._updateFieldArray(name, updatedFieldArrayValues, removeArrayAt, {
       argA: index,
     });
@@ -215,7 +217,7 @@ export function useFieldArray<
     control._names.focus = getFocusFieldName(name, index, options);
     ids.current = insertAt(ids.current, index, insertValue.map(generateId));
     updateValues(updatedFieldArrayValues);
-    setFields(updatedFieldArrayValues);
+    fields.value = updatedFieldArrayValues;
     control._updateFieldArray(name, updatedFieldArrayValues, insertAt, {
       argA: index,
       argB: fillEmptyArray(value),
@@ -227,7 +229,7 @@ export function useFieldArray<
     swapArrayAt(updatedFieldArrayValues, indexA, indexB);
     swapArrayAt(ids.current, indexA, indexB);
     updateValues(updatedFieldArrayValues);
-    setFields(updatedFieldArrayValues);
+    fields.value = updatedFieldArrayValues;
     control._updateFieldArray(
       name,
       updatedFieldArrayValues,
@@ -245,7 +247,7 @@ export function useFieldArray<
     moveArrayAt(updatedFieldArrayValues, from, to);
     moveArrayAt(ids.current, from, to);
     updateValues(updatedFieldArrayValues);
-    setFields(updatedFieldArrayValues);
+    fields.value = updatedFieldArrayValues;
     control._updateFieldArray(
       name,
       updatedFieldArrayValues,
@@ -274,7 +276,7 @@ export function useFieldArray<
       !item || i === index ? generateId() : ids.current[i],
     );
     updateValues(updatedFieldArrayValues);
-    setFields([...updatedFieldArrayValues]);
+    fields.value = [...updatedFieldArrayValues];
     control._updateFieldArray(
       name,
       updatedFieldArrayValues,
@@ -296,7 +298,7 @@ export function useFieldArray<
     const updatedFieldArrayValues = convertToArrayPayload(cloneObject(value));
     ids.current = updatedFieldArrayValues.map(generateId);
     updateValues([...updatedFieldArrayValues]);
-    setFields([...updatedFieldArrayValues]);
+    fields.value = [...updatedFieldArrayValues];
     control._updateFieldArray(
       name,
       [...updatedFieldArrayValues],
@@ -387,7 +389,7 @@ export function useFieldArray<
 
     control._updateValid();
     _actioned.current = false;
-  }, [fields, name, control]);
+  }, [fields.value, name, control]);
 
   React.useEffect(() => {
     !get(control._formValues, name) && control._updateFieldArray(name);
@@ -409,11 +411,11 @@ export function useFieldArray<
     replace: React.useCallback(replace, [updateValues, name, control]),
     fields: React.useMemo(
       () =>
-        fields.map((field, index) => ({
+        fields.value.map((field, index) => ({
           ...field,
           [keyName]: ids.current[index] || generateId(),
         })) as FieldArrayWithId<TFieldValues, TFieldArrayName, TKeyName>[],
-      [fields, keyName],
+      [fields.value, keyName],
     ),
   };
 }
